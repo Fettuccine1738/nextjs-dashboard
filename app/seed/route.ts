@@ -5,7 +5,23 @@ import { invoices, customers, revenue, users } from '../lib/placeholder-data';
 const sql = postgres(process.env.POSTGRES_URL!, { ssl: 'require' });
 
 async function seedUsers() {
-  await sql`CREATE EXTENSION IF NOT EXISTS "uuid-ossp"`;
+ // await sql`CREATE EXTENSION IF NOT EXISTS "uuid-ossp"`;
+ await sql`DROP TABLE IF EXISTS invoices CASCADE;`;
+ await sql`DROP TABLE IF EXISTS customers CASCADE;`;
+ await sql`DROP TABLE IF EXISTS users CASCADE;`;
+ await sql`DROP TABLE IF EXISTS revenue CASCADE;`;
+ await sql`DROP EXTENSION IF EXISTS "uuid-ossp";`; // co pilot suggested
+
+  // recreate the uuid-ossp extension
+  await sql`
+  DO $$
+  BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_extension WHERE extname = 'uuid-ossp') THEN
+      CREATE EXTENSION "uuid-ossp";
+    END IF;
+  END $$;
+`;
+// copilot suggested ends here
   await sql`
     CREATE TABLE IF NOT EXISTS users (
       id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
@@ -101,17 +117,34 @@ async function seedRevenue() {
   return insertedRevenue;
 }
 
-export async function GET() {
-  try {
-    const result = await sql.begin((sql) => [
-      seedUsers(),
-      seedCustomers(),
-      seedInvoices(),
-      seedRevenue(),
-    ]);
+// replaced with gpt suggestion below, seeds the database sequentially
+//export async function GET() {
+  //try {
+    //const result = await sql.begin((sql) => [
+      //seedUsers(),
+      //seedCustomers(),
+      //seedInvoices(),
+      //seedRevenue(),
+    //]);
+//
+    //return Response.json({ message: 'Database seeded successfully' });
+  //} catch (error) {
+    //return Response.json({ error }, { status: 500 });
+  //}
+//
 
-    return Response.json({ message: 'Database seeded successfully' });
-  } catch (error) {
-    return Response.json({ error }, { status: 500 });
+  export async function GET() {
+    try {
+      // Execute seeding functions sequentially
+      await seedUsers();
+      await seedCustomers();
+      await seedInvoices();
+      await seedRevenue();
+  
+      return Response.json({ message: 'Database seeded successfully' });
+    } catch (error) {
+      return Response.json({ error }, { status: 500 });
+    }
   }
-}
+
+//}
