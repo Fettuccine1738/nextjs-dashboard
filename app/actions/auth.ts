@@ -10,8 +10,10 @@ export async function login(formData: FormData) {
 
   // placeholder - check to validate credentials against the database
   if (email && password) {
+      // Set a cookie or session token
+    const cookieStore = await cookies()
     // sets a secure HTTP-only cookie named "auth-token" valid for 1 week.
-    cookies().set("auth-token", "example-token", {
+    cookieStore.set("auth-token", "example-token", {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       maxAge: 60 * 60 * 24 * 7, 
@@ -27,6 +29,9 @@ export async function login(formData: FormData) {
 }
 
 export async function logout() {
-  cookies().delete("auth-token")
+  const cookieStore = await cookies()
+  cookieStore.delete("auth-token")
   redirect("/login")
 }
+
+
