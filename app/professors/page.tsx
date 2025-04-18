@@ -1,7 +1,7 @@
 import { getProfessors } from "../actions/professors"
 import Link from "next/link"
 
-export default async function ProffesorsPage() {
+export default async function ProfesorsPage() {
   const professors = await getProfessors()
 
   return (
